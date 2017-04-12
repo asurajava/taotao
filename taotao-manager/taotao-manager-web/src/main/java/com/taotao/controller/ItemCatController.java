@@ -14,11 +14,17 @@ import java.util.List;
  * Created by Asura on 2017/2/18.
  */
 @Controller
+
 @RequestMapping("/item/cat")
 public class ItemCatController {
     @Autowired
     private ItemCatService itemCatService;
 
+    /**
+     * 点击新增商品,再点击选择类目后，展示分类信息
+     * @param parentId
+     * @return
+     */
     @RequestMapping("/list")
     @ResponseBody
     public List<EasyUITreeNode> getItemCatList(@RequestParam(value="id",defaultValue = "0") long parentId){

@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 
-/**
+/**商品管理controller
  * Created by Asura on 2017/2/17.
  */
 @Controller
@@ -20,6 +20,11 @@ public class ItemController {
     @Autowired
     private ItemService itemService;
 
+    /**
+     * 点击之后根据id查询某一个商品
+     * @param itemId
+     * @return
+     */
     @RequestMapping("/item/{itemId}")
     @ResponseBody
     public TbItem getItemById(@PathVariable Long itemId){
@@ -27,6 +32,12 @@ public class ItemController {
         return  item;
     }
 
+    /**
+     * 点击查询商品,在itemlist页面展示所有商品
+     * @param page
+     * @param rows
+     * @return
+     */
     @RequestMapping("/item/list")
     @ResponseBody
     public EasyUIDataGridResult getItemList(Integer page,Integer rows){
@@ -34,7 +45,15 @@ public class ItemController {
         return  result;
     }
 
-@RequestMapping(value="/item/save",method = RequestMethod.POST)
+    /**
+     *新增商品提交按钮
+     * @param item
+     * @param desc
+     * @param itemParams
+     * @return
+     * @throws Exception
+     */
+    @RequestMapping(value="/item/save",method = RequestMethod.POST)
 @ResponseBody
     public TaotaoResult createItem(TbItem item,String desc,String itemParams)throws Exception{
          TaotaoResult result=itemService.createItem(item,desc,itemParams);
