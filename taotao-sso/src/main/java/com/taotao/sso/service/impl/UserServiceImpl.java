@@ -2,6 +2,8 @@ package com.taotao.sso.service.impl;
 
 
 import com.taotao.common.pojo.TaotaoResult;
+import com.taotao.common.utils.CookieUtils;
+import com.taotao.common.utils.HttpClientUtil;
 import com.taotao.common.utils.JsonUtils;
 import com.taotao.mapper.TbUserMapper;
 import com.taotao.pojo.TbUser;
@@ -14,9 +16,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
+
+import static com.taotao.common.utils.HttpClientUtil.doGet;
 
 /**
  *用户管理service
@@ -32,6 +38,8 @@ public class UserServiceImpl implements UserService {
    private  String REDIS_USER_SESSION_KEY;
     @Value("${SSO_SESSION_EXPIRE}")
     private Integer SSO_SESSION_EXPIRE;
+    @Value("${INDEX_URL}")
+    public String INDEX_URL;
     @Override
     public TaotaoResult checkData(String content, Integer type) {
         //创建查询条件
@@ -81,7 +89,7 @@ public class UserServiceImpl implements UserService {
      * @return
      */
     @Override
-    public TaotaoResult userLogin(String username, String password) {
+    public TaotaoResult userLogin(String username, String password, HttpServletRequest request, HttpServletResponse response) {
       TbUserExample example=new TbUserExample();
        TbUserExample.Criteria criteria=example.createCriteria();
         criteria.andUsernameEqualTo(username);
@@ -103,6 +111,8 @@ public class UserServiceImpl implements UserService {
         jedisClient.set(REDIS_USER_SESSION_KEY+":"+token, JsonUtils.objectToJson(user));
         //设置session的过期时间
         jedisClient.expire(REDIS_USER_SESSION_KEY+":"+token,SSO_SESSION_EXPIRE);
+        //添加写cookie逻辑,cookie的有效期是关闭浏览器就失效
+        CookieUtils.setCookie(request,response,"TT_TOKEN",token);
         //返回token
         return TaotaoResult.ok(token);
 
@@ -120,5 +130,14 @@ public class UserServiceImpl implements UserService {
         jedisClient.expire(REDIS_USER_SESSION_KEY+":"+token,SSO_SESSION_EXPIRE);
         //返回信息
         return TaotaoResult.ok(JsonUtils.jsonToPojo(json,TbUser.class));
+    }
+
+    @Override
+    public TaotaoResult exitByToken(String token) {
+        //根据token从redis中删除信息
+       jedisClient.del(REDIS_USER_SESSION_KEY+":"+token);
+
+
+        return TaotaoResult.ok();
     }
 }

@@ -12,6 +12,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.ModelAndView;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import static com.taotao.common.pojo.TaotaoResult.build;
 
@@ -22,12 +26,12 @@ import static com.taotao.common.pojo.TaotaoResult.build;
 @Controller
 @RequestMapping("/user")
 public class UserController {
-   @Autowired
+    @Autowired
     private UserService userService;
 
     @RequestMapping("/check/{param}/{type}")
     @ResponseBody
-    public Object checkData(@PathVariable String param,@PathVariable Integer type,String callback) {
+    public Object checkData(@PathVariable String param, @PathVariable Integer type, String callback) {
         TaotaoResult result = null;
 
         //参数有效性校验
@@ -61,65 +65,77 @@ public class UserController {
         }
 
 
-            if (null != callback) {
-                MappingJacksonValue mappingJacksonValue = new MappingJacksonValue(result);
-                mappingJacksonValue.setJsonpFunction(callback);
-                return mappingJacksonValue;
-            } else {
-                return result;
-            }
-
+        return testJsonp(callback, result);
 
     }
+
     //创建用户
-    @RequestMapping(value = "/register",method = RequestMethod.POST)
+    @RequestMapping(value = "/register", method = RequestMethod.POST)
     @ResponseBody
-    public TaotaoResult create(TbUser user){
-       try{
-           TaotaoResult result=userService.createUser(user);
-           return result;
-       }catch (Exception e){
-            return build(500,ExceptionUtil.getStackTrace(e));
-       }
-
+    public TaotaoResult create(TbUser user) {
+        try {
+            TaotaoResult result = userService.createUser(user);
+            return result;
+        } catch (Exception e) {
+            return build(500, ExceptionUtil.getStackTrace(e));
+        }
 
 
     }
+
     //用户登录
-    @RequestMapping(value = "/login",method = RequestMethod.POST)
+    @RequestMapping(value = "/login", method = RequestMethod.POST)
     @ResponseBody
-    public TaotaoResult userLogin(String username,String password){
-       try{
-           TaotaoResult result=userService.userLogin(username,password);
-            return  result;
-       }catch (Exception e){
-           e.printStackTrace();
-           return  build(500,ExceptionUtil.getStackTrace(e));
-       }
+    public TaotaoResult userLogin(String username, String password, HttpServletRequest request, HttpServletResponse response) {
+        try {
+            TaotaoResult result = userService.userLogin(username, password,request,response);
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return build(500, ExceptionUtil.getStackTrace(e));
+        }
 
 
     }
 
     @RequestMapping("/token/{token}")
     @ResponseBody
-    public  Object getUserByToken(@PathVariable String token,String callback){
-     TaotaoResult result=null;
-       try{
-            result= userService.getUserByToken(token);
-       }catch (Exception e){
-           e.printStackTrace();
-           result= TaotaoResult.build(500,ExceptionUtil.getStackTrace(e));
-       }
-       //判断是否为jsonp调用
+    public Object getUserByToken(@PathVariable String token, String callback) {
+        TaotaoResult result = null;
+        try {
+            result = userService.getUserByToken(token);
+        } catch (Exception e) {
+            e.printStackTrace();
+            result = TaotaoResult.build(500, ExceptionUtil.getStackTrace(e));
+        }
+        //判断是否为jsonp调用
+        return  testJsonp(callback, result);
+    }
+
+
+
+    @RequestMapping("/logout/{token}")
+    @ResponseBody
+    public ModelAndView exitByToken(@PathVariable  String token,String callback){
+     TaotaoResult result=userService.exitByToken(token);
+        if(result.getData()==null) {
+            return new ModelAndView("redirect:http://localhost:8082");
+        }
+   return  null;
+    }
+
+    //是否调用jsonp公共方法
+    public Object testJsonp(String callback,TaotaoResult result){
         if(StringUtils.isBlank(callback)){
-            return result;
-        }else {
+            return  result;
+        }else{
             MappingJacksonValue mappingJacksonValue=new MappingJacksonValue(result);
             mappingJacksonValue.setJsonpFunction(callback);
-            return mappingJacksonValue;
+            return  mappingJacksonValue;
         }
 
     }
+
 
 
 }
