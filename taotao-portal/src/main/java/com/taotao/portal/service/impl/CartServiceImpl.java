@@ -44,7 +44,7 @@ public class CartServiceImpl implements CartService {
            if( cItem.getId()==itemId){
                //增加商品数量
                cItem.setNum(cItem.getNum()+num);
-
+               cartItem=cItem;
                break;
            }
         }

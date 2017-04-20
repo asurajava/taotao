@@ -35,6 +35,8 @@ public class LoginInterceptor implements HandlerInterceptor {
 
 
         //取到用户信息，放行
+        //把用户信息放入request
+        request.setAttribute("user",user);
         return true;
         //返回值决定handler是否执行，true：执行。
 
